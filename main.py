@@ -33,6 +33,16 @@ class ConfigManager:
         }
         self.load_config()
 
+
+    def ensure_config(self):
+        """Ensure the config.json file exists, setting default root path if missing."""
+        if not os.path.exists(self.CONFIG_FILE):
+            root_path = os.getcwd()
+            default_config = {"rootPath": root_path}
+            with open(self.CONFIG_FILE, "w") as f:
+                json.dump(default_config, f, indent=4)
+            print(f"Config file created with root path: {root_path}")
+
     def load_config(self):
         try:
             with open(self.CONFIG_FILE, "r") as f:
@@ -79,6 +89,7 @@ class HabitTracker:
     def __init__(self, config: ConfigManager):
         self.console = Console()
         self.config = config
+        self.config_manager = config_manager
 
         # Combine root path if the user wants to store data there
         root = self.config.config_data["rootPath"]
@@ -97,6 +108,7 @@ class HabitTracker:
 
         self.data = self.load_data()
         self.username = self.load_user()
+
 
     def load_data(self):
         try:
@@ -133,17 +145,59 @@ class HabitTracker:
 
     def setup_user(self):
         try:
-            username = self.console.input("[cyan]Enter your name to set up Habit Tracker: [/cyan]")
+            # Ensure config.json exists before proceeding
+            self.config_manager.ensure_config()
+
+            username = self.console.input("[cyan]Enter a username to set up or change the existing username in HCLI: [/cyan]")
             ud = os.path.dirname(self.USER_FILE)
             if ud and not os.path.exists(ud):
                 os.makedirs(ud)
 
             with open(self.USER_FILE, "w") as f:
                 json.dump({"username": username}, f, indent=4)
-            return username
+
+            self.console.print(f"[green]Username '{username}' has been set successfully![/green]")
         except Exception as e:
             self.console.print(f"[red]Error setting up user: {e}[/red]")
-            return ""
+
+        
+    def intro(self):
+        """Explain to the user how to use the program and what it's about."""
+        self.console.print("""
+            [cyan]Welcome to the HCLI![/cyan]
+
+            This program helps you create, track, and analyze habits. You can:
+            - Add daily or weekly habits,
+            - Check them off when done,
+            - View streaks and pending tasks,
+            - See analytics,
+            - And more!
+
+            [b]Command Overview:[/b]
+            - [green]intro[/green]: This introduction.
+            - [green]add[/green]: Create a new habit.
+            - [green]check[/green]: Mark a habit as complete.
+            - [green]list_habits[/green]: Show all tracked habits.
+            - [green]streaks[/green]: See your best streaks.
+            - [green]reminder[/green]: Show overdue habits.
+            - [green]summary[/green]: View analytics and performance.
+            - [green]dashboard[/green]: Show a chart (ASCII or Matplotlib).
+            - [green]delete[/green]: Remove a habit.
+            - [green]details[/green]: Detailed info on a habit.
+            - [green]fill[/green]: Generate some fake data.
+            - [green]reset[/green]: Wipe everything.
+            - [green]config[/green]: Adjust file paths or root path.
+            - [green]welcome[/green]: Display a welcome message & summary.
+
+            [b]Usage Examples:[/b]
+            - python main.py add "Workout" daily
+            - python main.py list_habits
+            - python main.py streaks
+            - python main.py config --show
+            - python main.py config --data-file MyHabits.json
+
+            Enjoy tracking your habits!
+            """)
 
     def show_welcome_message(self):
         try:
@@ -180,7 +234,7 @@ class HabitTracker:
                 else:
                     self.console.print("\n[green]No pending habit reminders.[/green]")
             else:
-                self.console.print("[cyan]Welcome to Habit Tracker! Set up your profile to begin.[/cyan]")
+                self.console.print("[cyan]Welcome to HCLI! Set up your profile to begin.[/cyan]")
                 self.console.print("For usage info, run: [blue]python main.py --help[/blue]")
         except Exception as e:
             self.console.print(f"[red]Error displaying welcome message: {e}[/red]")
@@ -498,42 +552,9 @@ habit_tracker = HabitTracker(config_manager)
 ####################################
 @app.command("intro")
 def intro():
-    """Explain to the user how to use the program and what it's about."""
-    typer.echo("""
-[cyan]Welcome to the Habit Tracker CLI![/cyan]
+    """Call the intro function from the HabitTracker class."""
+    habit_tracker.intro()
 
-This program helps you create, track, and analyze habits. You can:
- - Add daily or weekly habits,
- - Check them off when done,
- - View streaks and pending tasks,
- - See analytics,
- - And more!
-
-[b]Command Overview:[/b]
- - [green]intro[/green]: This introduction.
- - [green]add[/green]: Create a new habit.
- - [green]check[/green]: Mark a habit as complete.
- - [green]list_habits[/green]: Show all tracked habits.
- - [green]streaks[/green]: See your best streaks.
- - [green]reminder[/green]: Show overdue habits.
- - [green]summary[/green]: View analytics and performance.
- - [green]dashboard[/green]: Show a chart (ASCII or Matplotlib).
- - [green]delete[/green]: Remove a habit.
- - [green]details[/green]: Detailed info on a habit.
- - [green]fill[/green]: Generate some fake data.
- - [green]reset[/green]: Wipe everything.
- - [green]config[/green]: Adjust file paths or root path.
- - [green]welcome[/green]: Display a welcome message & summary.
-
-[b]Usage Examples:[/b]
- - python main.py add "Workout" daily
- - python main.py list_habits
- - python main.py streaks
- - python main.py config --show
- - python main.py config --data-file MyHabits.json
-
-Enjoy tracking your habits!
-""")
 
 ####################################
 # Config Command
@@ -551,16 +572,16 @@ def config_command(
             config_manager.show()
         if data_file:
             config_manager.set_data_file(data_file)
-            typer.echo(f"[green]Data file updated to {data_file}[/green]")
+            typer.echo(f"Data file updated to {data_file}")
         if user_file:
             config_manager.set_user_file(user_file)
-            typer.echo(f"[green]User file updated to {user_file}[/green]")
+            typer.echo(f"User file updated to {user_file}")
         if root_path:
             config_manager.set_root_path(root_path)
-            typer.echo(f"[green]Root path updated to {root_path}[/green]")
+            typer.echo(f"Root path updated to {root_path}")
 
         if show or data_file or user_file or root_path:
-            typer.echo("[yellow]Please re-run the application so changes take effect.[/yellow]")
+            typer.echo("Please re-run the application so changes take effect.")
     except Exception as e:
         handle_error(e, "Failed to manage config")
         raise typer.Exit(1)
@@ -569,6 +590,12 @@ def config_command(
 ####################################
 # Standard Commands
 ####################################
+
+@app.command("setup-user")
+def setup_user():
+    """Setup or update the username for the Habit Tracker."""
+    habit_tracker.setup_user()
+
 
 @app.command("list_habits")
 def list_habits_cmd():
