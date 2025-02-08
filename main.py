@@ -17,7 +17,6 @@ def handle_error(e: Exception, message: str = "An error occurred"):
     typer.echo(f"[red]{message}[/red]")
     typer.echo(f"[yellow]Details: {str(e)}[/yellow]")
 
-
 ####################################
 # Config Manager
 ####################################
@@ -33,7 +32,6 @@ class ConfigManager:
         }
         self.load_config()
 
-
     def ensure_config(self):
         """Ensure the config.json file exists, setting default root path if missing."""
         if not os.path.exists(self.CONFIG_FILE):
@@ -47,10 +45,9 @@ class ConfigManager:
         try:
             with open(self.CONFIG_FILE, "r") as f:
                 file_conf = json.load(f)
-                # override defaults
-                for k in ["rootPath", "data_file", "user_file"]:
-                    if k in file_conf:
-                        self.config_data[k] = file_conf[k]
+            for k in ["rootPath", "data_file", "user_file"]:
+                if k in file_conf:
+                    self.config_data[k] = file_conf[k]
         except FileNotFoundError:
             # no config, that's fine
             pass
@@ -81,7 +78,6 @@ class ConfigManager:
         for k, v in self.config_data.items():
             typer.echo(f"- {k}: {v}")
 
-
 ####################################
 # Main HabitTracker class
 ####################################
@@ -96,7 +92,6 @@ class HabitTracker:
         dataFile = self.config.config_data["data_file"]
         userFile = self.config.config_data["user_file"]
 
-        # If rootPath is set and data/userFile are not absolute, combine them
         if root:
             if not os.path.isabs(dataFile):
                 dataFile = os.path.join(root, os.path.basename(dataFile))
@@ -108,7 +103,6 @@ class HabitTracker:
 
         self.data = self.load_data()
         self.username = self.load_user()
-
 
     def load_data(self):
         try:
@@ -122,7 +116,6 @@ class HabitTracker:
 
     def save_data(self):
         try:
-            # create directory if not exist
             d = os.path.dirname(self.DATA_FILE)
             if d and not os.path.exists(d):
                 os.makedirs(d)
@@ -145,9 +138,7 @@ class HabitTracker:
 
     def setup_user(self):
         try:
-            # Ensure config.json exists before proceeding
             self.config_manager.ensure_config()
-
             username = self.console.input("[cyan]Enter a username to set up or change the existing username in HCLI: [/cyan]")
             ud = os.path.dirname(self.USER_FILE)
             if ud and not os.path.exists(ud):
@@ -160,44 +151,43 @@ class HabitTracker:
         except Exception as e:
             self.console.print(f"[red]Error setting up user: {e}[/red]")
 
-        
     def intro(self):
         """Explain to the user how to use the program and what it's about."""
         self.console.print("""
-            [cyan]Welcome to the HCLI![/cyan]
+[cyan]Welcome to the HCLI![/cyan]
 
-            This program helps you create, track, and analyze habits. You can:
-            - Add daily or weekly habits,
-            - Check them off when done,
-            - View streaks and pending tasks,
-            - See analytics,
-            - And more!
+This program helps you create, track, and analyze habits. You can:
+- Add daily or weekly habits,
+- Check them off when done,
+- View streaks and pending tasks,
+- See analytics,
+- And more!
 
-            [b]Command Overview:[/b]
-            - [green]intro[/green]: This introduction.
-            - [green]add[/green]: Create a new habit.
-            - [green]check[/green]: Mark a habit as complete.
-            - [green]list_habits[/green]: Show all tracked habits.
-            - [green]streaks[/green]: See your best streaks.
-            - [green]reminder[/green]: Show overdue habits.
-            - [green]summary[/green]: View analytics and performance.
-            - [green]dashboard[/green]: Show a chart (ASCII or Matplotlib).
-            - [green]delete[/green]: Remove a habit.
-            - [green]details[/green]: Detailed info on a habit.
-            - [green]fill[/green]: Generate some fake data.
-            - [green]reset[/green]: Wipe everything.
-            - [green]config[/green]: Adjust file paths or root path.
-            - [green]welcome[/green]: Display a welcome message & summary.
+[b]Command Overview:[/b]
+- [green]intro[/green]: This introduction.
+- [green]add[/green]: Create a new habit.
+- [green]check[/green]: Mark a habit as complete.
+- [green]list_habits[/green]: Show all tracked habits.
+- [green]streaks[/green]: See your best streaks.
+- [green]reminder[/green]: Show overdue habits.
+- [green]summary[/green]: View analytics and performance.
+- [green]dashboard[/green]: Show a chart (ASCII or Matplotlib).
+- [green]delete[/green]: Remove a habit (or remove a single check).
+- [green]details[/green]: Detailed info on a habit.
+- [green]fill[/green]: Generate some fake data.
+- [green]reset[/green]: Wipe everything.
+- [green]config[/green]: Adjust file paths or root path.
+- [green]welcome[/green]: Display a welcome message & summary.
 
-            [b]Usage Examples:[/b]
-            - python main.py add "Workout" daily
-            - python main.py list_habits
-            - python main.py streaks
-            - python main.py config --show
-            - python main.py config --data-file MyHabits.json
+[b]Usage Examples:[/b]
+- python main.py add "Workout" daily
+- python main.py list_habits
+- python main.py streaks
+- python main.py config --show
+- python main.py config --data-file MyHabits.json
 
-            Enjoy tracking your habits!
-            """)
+Enjoy tracking your habits!
+""")
 
     def show_welcome_message(self):
         try:
@@ -215,7 +205,7 @@ class HabitTracker:
                 self.console.print("- `summary`: View analytics and performance")
                 self.console.print("- `reminder`: Get reminders for pending habits")
                 self.console.print("- `dashboard`: Show a graphical or CLI analysis of habits")
-                self.console.print("- `delete <habit>`: Remove a habit")
+                self.console.print("- `delete <habit>`: Remove a habit (or a single check).")
                 self.console.print("- `details <habit>`: Show detailed info about a habit")
                 self.console.print("- `fill`: Populate fake data for testing.")
                 self.console.print("- `reset`: Reset all habits and logs.")
@@ -257,17 +247,35 @@ class HabitTracker:
         except Exception as e:
             self.console.print(f"[red]Error adding habit: {e}[/red]")
 
-    def check_habit(self, name: str):
+    def check_habit(self, name: str, date_str: str = None):
+        """
+        Mark a habit as completed, optionally specifying a date (YYYY-MM-DD). 
+        Default is today's date if no date_str is provided.
+        """
         try:
             if name not in self.data["habits"]:
                 self.console.print(f"[red]Habit '{name}' not found![/red]")
                 return
+
+            if date_str:
+                # parse the user-provided date
+                try:
+                    custom_date = datetime.strptime(date_str, "%Y-%m-%d")
+                    log_str = custom_date.isoformat()
+                except ValueError:
+                    self.console.print("[red]Invalid date format. Use YYYY-MM-DD.[/red]")
+                    return
+            else:
+                # default to today's date/time
+                log_str = datetime.now().isoformat()
+
             if name not in self.data["logs"]:
                 self.data["logs"][name] = []
-            self.data["logs"][name].append(datetime.now().isoformat())
+            self.data["logs"][name].append(log_str)
+
             self.save_data()
             period = self.data["habits"][name].get("periodicity", "daily/weekly?")
-            self.console.print(f"[green]Checked off '{name}' ({period}) for today![/green]")
+            self.console.print(f"[green]Checked off '{name}' ({period}) on {log_str}[/green]")
         except Exception as e:
             self.console.print(f"[red]Error checking habit: {e}[/red]")
 
@@ -332,16 +340,45 @@ class HabitTracker:
         except Exception as e:
             self.console.print(f"[red]Error calculating streaks: {e}[/red]")
 
-    def delete_habit(self, name: str):
+    def delete_habit(self, name: str, date_str: str = None):
+        """
+        Remove an entire habit if no date is specified, or remove a single check from logs for that date.
+        """
         try:
-            if name in self.data["habits"]:
+            if name not in self.data["habits"]:
+                self.console.print(f"[red]Habit '{name}' not found![/red]")
+                return
+
+            if date_str:
+                # remove a single check for the specified date
+                if name not in self.data["logs"]:
+                    self.console.print("[yellow]No logs for this habit to remove.[/yellow]")
+                    return
+                try:
+                    # parse user date
+                    custom_date = datetime.strptime(date_str, "%Y-%m-%d")
+                    iso_str = custom_date.isoformat()
+
+                    # remove any matching date from logs
+                    old_count = len(self.data["logs"][name])
+                    self.data["logs"][name] = [
+                        dt for dt in self.data["logs"][name]
+                        if not dt.startswith(iso_str)
+                    ]
+                    new_count = len(self.data["logs"][name])
+                    removed = old_count - new_count
+
+                    self.console.print(f"[green]Removed {removed} checks dated {date_str} from '{name}'.[/green]")
+                    self.save_data()
+                except ValueError:
+                    self.console.print("[red]Invalid date format. Use YYYY-MM-DD.[/red]")
+            else:
+                # remove the entire habit
                 del self.data["habits"][name]
                 if name in self.data["logs"]:
                     del self.data["logs"][name]
                 self.save_data()
-                self.console.print(f"[red]Habit '{name}' deleted.[/red]")
-            else:
-                self.console.print(f"[red]Habit '{name}' not found![/red]")
+                self.console.print(f"[red]Habit '{name}' deleted entirely.[/red]")
         except Exception as e:
             self.console.print(f"[red]Error deleting habit: {e}[/red]")
 
@@ -357,6 +394,14 @@ class HabitTracker:
         return count_30
 
     def summary(self):
+        """
+        Show analytics, including:
+          - total habits
+          - total check-ins
+          - pending habits
+          - list of daily habits
+          - habits user struggled with last month
+        """
         try:
             total_habits = len(self.data.get("habits", {}))
             total_checkins = sum(len(logs) for logs in self.data.get("logs", {}).values())
@@ -496,6 +541,9 @@ class HabitTracker:
             self.console.print(f"[red]Error displaying details for habit '{name}': {e}[/red]")
 
     def fill_data(self):
+        """
+        Generate fake data covering at least two months.
+        """
         try:
             sample_habits = [
                 ("Workout", "daily"),
@@ -506,6 +554,7 @@ class HabitTracker:
                 ("PayBills", "weekly")
             ]
 
+            # Add sample habits if not present
             for (habit_name, period) in sample_habits:
                 if habit_name not in self.data["habits"]:
                     self.data["habits"][habit_name] = {
@@ -515,17 +564,20 @@ class HabitTracker:
                 if habit_name not in self.data["logs"]:
                     self.data["logs"][habit_name] = []
 
+            # Generate random check-ins for the past 2 months (60 days)
             for habit_name, details in self.data["habits"].items():
-                random_days = random.randint(2, 10)
+                # random number of check-ins (between 10 and 30 for variety)
+                random_days = random.randint(10, 30)
                 base_date = datetime.now()
+
                 for _ in range(random_days):
-                    day_offset = random.randint(1, 15)
+                    day_offset = random.randint(1, 60)  # up to 60 days in the past
                     log_date = base_date - timedelta(days=day_offset)
                     log_str = log_date.isoformat()
                     self.data["logs"][habit_name].append(log_str)
 
             self.save_data()
-            self.console.print("[green]Fake data added successfully! Now you can test the functionalities.[/green]")
+            self.console.print("[green]Fake data added successfully (covering ~2 months)! Now you can test functionalities.[/green]")
         except Exception as e:
             self.console.print(f"[red]Error filling data: {e}[/red]")
 
@@ -537,7 +589,6 @@ class HabitTracker:
         except Exception as e:
             self.console.print(f"[red]Error resetting system: {e}[/red]")
 
-
 ####################################
 # Typer CLI Definition
 ####################################
@@ -546,7 +597,6 @@ app = typer.Typer()
 config_manager = ConfigManager()
 habit_tracker = HabitTracker(config_manager)
 
-
 ####################################
 # Intro Command
 ####################################
@@ -554,7 +604,6 @@ habit_tracker = HabitTracker(config_manager)
 def intro():
     """Call the intro function from the HabitTracker class."""
     habit_tracker.intro()
-
 
 ####################################
 # Config Command
@@ -586,17 +635,17 @@ def config_command(
         handle_error(e, "Failed to manage config")
         raise typer.Exit(1)
 
-
 ####################################
-# Standard Commands
+# Setup User
 ####################################
-
 @app.command("setup-user")
 def setup_user():
     """Setup or update the username for the Habit Tracker."""
     habit_tracker.setup_user()
 
-
+####################################
+# Standard Commands
+####################################
 @app.command("list_habits")
 def list_habits_cmd():
     """Show all tracked habits."""
@@ -620,11 +669,15 @@ def add(
 
 @app.command()
 def check(
-    name: str = typer.Argument(..., help="Name of the habit to check")
+    name: str = typer.Argument(..., help="Name of the habit to check"),
+    date: str = typer.Option(None, "--date", help="Optional date in YYYY-MM-DD format for the check.")
 ):
-    """Mark a habit as completed today."""
+    """
+    Mark a habit as completed, optionally specifying a date.
+    Default is today's date if no date is provided.
+    """
     try:
-        habit_tracker.check_habit(name)
+        habit_tracker.check_habit(name, date)
     except Exception as e:
         handle_error(e, "Failed to check the habit")
         raise typer.Exit(1)
@@ -640,11 +693,15 @@ def streaks():
 
 @app.command()
 def delete(
-    name: str = typer.Argument(..., help="Name of the habit to delete")
+    name: str = typer.Argument(..., help="Name of the habit to delete or remove a check from."),
+    date: str = typer.Option(None, "--date", help="Optional date in YYYY-MM-DD to remove a single check.")
 ):
-    """Remove a habit from tracking."""
+    """
+    Remove an entire habit if no date is specified,
+    or remove a single check from logs for that date if --date is provided.
+    """
     try:
-        habit_tracker.delete_habit(name)
+        habit_tracker.delete_habit(name, date)
     except Exception as e:
         handle_error(e, "Failed to delete the habit")
         raise typer.Exit(1)
@@ -699,12 +756,11 @@ def details(
         raise typer.Exit(1)
 
 ##########################
-# New Commands for Testing
+# Commands for Testing
 ##########################
-
 @app.command()
 def fill():
-    """Populate fake data for testing/demo."""
+    """Populate fake data for testing/demo (covering at least 2 months)."""
     try:
         habit_tracker.fill_data()
     except Exception as e:

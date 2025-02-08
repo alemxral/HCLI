@@ -1,7 +1,7 @@
-# Habit Tracker CLI
+# Habit Tracker HCLI
 
 ## Introduction
-The Habit Tracker CLI is a command-line application that helps users track their habits efficiently. It allows users to add, check off, and analyze their habits over time using a simple and interactive CLI.
+The Habit Tracker HCLI is a command-line application that helps users track their habits efficiently. It allows users to add, check off, and analyze their habits over time using a simple and interactive HCLI.
 
 ## Features
 - Add daily or weekly habits
@@ -26,7 +26,7 @@ You can run the application using the following commands, or alternatively, you 
 cscript init.vbs
 ```
 
-OR Run the application using any HCLI command in the root path:
+OR Run the application using any HHCLI command in the root path:
 
 ### Initial Setup
 
@@ -63,6 +63,11 @@ python main.py dashboard
 ```sh
 python main.py reset
 ```
+
+## Project Repository
+You can find the latest source code, contribute, or report issues at:
+[GitHub Repository](https://github.com/alemxral/HHCLI.git)
+
 
 ## License
 This project is licensed under the MIT License.
