@@ -1,5 +1,7 @@
 Option Explicit
-Dim objFSO, objShell, objFile, jsonFile, scriptPath, rootPath, jsonData, aliasCommand, profilePath
+
+Dim objFSO, objShell, objFile
+Dim jsonFile, scriptPath, rootPath, jsonData
 
 ' Create File System Object and Shell Object
 Set objFSO = CreateObject("Scripting.FileSystemObject")
@@ -15,13 +17,17 @@ jsonFile = rootPath & "\config.json"
 ' Check if config.json exists
 If objFSO.FileExists(jsonFile) Then
     ' Read the existing JSON file
-    Set objFile = objFSO.OpenTextFile(jsonFile, 1) ' Read mode
+    Set objFile = objFSO.OpenTextFile(jsonFile, 1) ' 1 = ForReading
     jsonData = objFile.ReadAll
     objFile.Close
 Else
-    ' Save the rootPath in config.json
+    ' Properly escape backslashes in rootPath for JSON
+    Dim sanitizedPath
+    sanitizedPath = Replace(rootPath, "\", "\\")
+
+    ' Create config.json with valid JSON
     Set objFile = objFSO.CreateTextFile(jsonFile, True)
-    objFile.WriteLine "{""rootPath"": """ & rootPath & """}"
+    objFile.WriteLine "{""rootPath"": """ & sanitizedPath & """}"
     objFile.Close
 End If
 
@@ -36,4 +42,3 @@ End If
 
 ' Run the Python script in a new command prompt window
 objShell.Run "cmd.exe /k python """ & rootPath & "\main.py"" welcome", 1, False
-

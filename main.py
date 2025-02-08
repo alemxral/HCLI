@@ -3,7 +3,6 @@ import json
 from datetime import datetime, timedelta
 from rich.console import Console
 from rich.table import Table
-import matplotlib.pyplot as plt
 import os
 import random
 
@@ -18,15 +17,84 @@ def handle_error(e: Exception, message: str = "An error occurred"):
     typer.echo(f"[red]{message}[/red]")
     typer.echo(f"[yellow]Details: {str(e)}[/yellow]")
 
+
+####################################
+# Config Manager
+####################################
+class ConfigManager:
+    CONFIG_FILE = "config.json"
+
+    def __init__(self):
+        # We store rootPath by default, plus the data_file and user_file.
+        self.config_data = {
+            "rootPath": "",
+            "data_file": "habits.json",
+            "user_file": "user.json"
+        }
+        self.load_config()
+
+    def load_config(self):
+        try:
+            with open(self.CONFIG_FILE, "r") as f:
+                file_conf = json.load(f)
+                # override defaults
+                for k in ["rootPath", "data_file", "user_file"]:
+                    if k in file_conf:
+                        self.config_data[k] = file_conf[k]
+        except FileNotFoundError:
+            # no config, that's fine
+            pass
+        except Exception as e:
+            typer.echo(f"[red]Error loading config: {e}[/red]")
+
+    def save_config(self):
+        try:
+            with open(self.CONFIG_FILE, "w") as f:
+                json.dump(self.config_data, f, indent=4)
+        except Exception as e:
+            typer.echo(f"[red]Error saving config: {e}[/red]")
+
+    def set_root_path(self, path: str):
+        self.config_data["rootPath"] = path
+        self.save_config()
+
+    def set_data_file(self, path: str):
+        self.config_data["data_file"] = path
+        self.save_config()
+
+    def set_user_file(self, path: str):
+        self.config_data["user_file"] = path
+        self.save_config()
+
+    def show(self):
+        typer.echo("Current Configuration:")
+        for k, v in self.config_data.items():
+            typer.echo(f"- {k}: {v}")
+
+
 ####################################
 # Main HabitTracker class
 ####################################
 class HabitTracker:
-    DATA_FILE = "habits.json"
-    USER_FILE = "user.json"
-
-    def __init__(self):
+    def __init__(self, config: ConfigManager):
         self.console = Console()
+        self.config = config
+
+        # Combine root path if the user wants to store data there
+        root = self.config.config_data["rootPath"]
+        dataFile = self.config.config_data["data_file"]
+        userFile = self.config.config_data["user_file"]
+
+        # If rootPath is set and data/userFile are not absolute, combine them
+        if root:
+            if not os.path.isabs(dataFile):
+                dataFile = os.path.join(root, os.path.basename(dataFile))
+            if not os.path.isabs(userFile):
+                userFile = os.path.join(root, os.path.basename(userFile))
+
+        self.DATA_FILE = dataFile
+        self.USER_FILE = userFile
+
         self.data = self.load_data()
         self.username = self.load_user()
 
@@ -42,6 +110,11 @@ class HabitTracker:
 
     def save_data(self):
         try:
+            # create directory if not exist
+            d = os.path.dirname(self.DATA_FILE)
+            if d and not os.path.exists(d):
+                os.makedirs(d)
+
             with open(self.DATA_FILE, "w") as f:
                 json.dump(self.data, f, indent=4)
         except Exception as e:
@@ -61,6 +134,10 @@ class HabitTracker:
     def setup_user(self):
         try:
             username = self.console.input("[cyan]Enter your name to set up Habit Tracker: [/cyan]")
+            ud = os.path.dirname(self.USER_FILE)
+            if ud and not os.path.exists(ud):
+                os.makedirs(ud)
+
             with open(self.USER_FILE, "w") as f:
                 json.dump({"username": username}, f, indent=4)
             return username
@@ -76,26 +153,27 @@ class HabitTracker:
                 )
                 self.console.print("[yellow]Stay consistent and track your progress effortlessly.[/yellow]")
                 self.console.print("\n[yellow]Useful commands:")
+                self.console.print("- `intro`: Brief introduction about this program")
                 self.console.print("- `add <habit> <daily/weekly>`: Add a new habit")
                 self.console.print("- `check <habit>`: Mark a habit as completed")
-                self.console.print("- `list`: Show all habits")
+                self.console.print("- `list_habits`: Show all habits")
                 self.console.print("- `streaks`: View your habit streaks")
                 self.console.print("- `summary`: View analytics and performance")
                 self.console.print("- `reminder`: Get reminders for pending habits")
-                self.console.print("- `dashboard`: Show a graphical analysis of habits")
+                self.console.print("- `dashboard`: Show a graphical or CLI analysis of habits")
                 self.console.print("- `delete <habit>`: Remove a habit")
                 self.console.print("- `details <habit>`: Show detailed info about a habit")
                 self.console.print("- `fill`: Populate fake data for testing.")
                 self.console.print("- `reset`: Reset all habits and logs.")
+                self.console.print("- `config`: Manage configuration.")
+                self.console.print("\nFor more info, run: [blue]python main.py --help[/blue]")
 
-                # Show a summary of the current habit tracking status
                 if hasattr(self, 'summary') and callable(getattr(self, 'summary', None)):
                     self.console.print("\n[blue]Habit Tracking Summary:[/blue]")
                     self.summary()
                 else:
                     self.console.print("\n[blue]No habit tracking summary available yet.[/blue]")
 
-                # Show pending habits
                 if hasattr(self, 'reminder') and callable(getattr(self, 'reminder', None)):
                     self.console.print("\n[red]Pending Habit Reminders:[/red]")
                     self.reminder()
@@ -103,6 +181,7 @@ class HabitTracker:
                     self.console.print("\n[green]No pending habit reminders.[/green]")
             else:
                 self.console.print("[cyan]Welcome to Habit Tracker! Set up your profile to begin.[/cyan]")
+                self.console.print("For usage info, run: [blue]python main.py --help[/blue]")
         except Exception as e:
             self.console.print(f"[red]Error displaying welcome message: {e}[/red]")
 
@@ -120,7 +199,7 @@ class HabitTracker:
                 "created_at": datetime.now().isoformat()
             }
             self.save_data()
-            self.console.print(f"[green]Habit '{name}' added successfully![/green]")
+            self.console.print(f"[green]Habit '{name}' ({periodicity}) added successfully![/green]")
         except Exception as e:
             self.console.print(f"[red]Error adding habit: {e}[/red]")
 
@@ -133,15 +212,12 @@ class HabitTracker:
                 self.data["logs"][name] = []
             self.data["logs"][name].append(datetime.now().isoformat())
             self.save_data()
-            self.console.print(f"[green]Checked off '{name}' for today![/green]")
+            period = self.data["habits"][name].get("periodicity", "daily/weekly?")
+            self.console.print(f"[green]Checked off '{name}' ({period}) for today![/green]")
         except Exception as e:
             self.console.print(f"[red]Error checking habit: {e}[/red]")
 
-    def list_habits(self):
-        """
-        The method that the Typer `list` command calls.
-        Make sure the name is EXACTLY `list_habits`.
-        """
+    def list_habits_cmd(self):
         try:
             table = Table(title="Tracked Habits")
             table.add_column("Name", style="cyan")
@@ -156,37 +232,49 @@ class HabitTracker:
             self.console.print(f"[red]Error listing habits: {e}[/red]")
 
     def streaks(self):
+        """Show the longest streak overall and display streaks for each habit."""
         try:
             table = Table(title="Habit Streaks")
             table.add_column("Habit", style="cyan")
+            table.add_column("Periodicity", style="magenta")
             table.add_column("Streak (days/weeks)", style="magenta")
+
+            longest_streak = 0
+            best_habit = None
 
             for name, logs in self.data.get("logs", {}).items():
                 if name not in self.data["habits"]:
-                    continue  # skip logs for habits that don't exist
-
+                    continue
+                period = self.data["habits"][name].get("periodicity", "?")
                 sorted_logs = sorted([datetime.fromisoformat(log) for log in logs], reverse=True)
                 if not sorted_logs:
-                    table.add_row(name, "0")
+                    table.add_row(name, period, "0")
                     continue
 
                 streak = 1
                 prev_date = sorted_logs[0]
                 for log in sorted_logs[1:]:
                     diff = (prev_date - log).days
-                    # daily habit -> needs exactly 1 day difference
-                    if self.data["habits"][name]["periodicity"] == "daily" and diff == 1:
+                    if period == "daily" and diff == 1:
                         streak += 1
-                    # weekly habit -> up to 7 days difference
-                    elif self.data["habits"][name]["periodicity"] == "weekly" and diff <= 7:
+                    elif period == "weekly" and diff <= 7:
                         streak += 1
                     else:
                         break
                     prev_date = log
 
-                table.add_row(name, str(streak))
+                if streak > longest_streak:
+                    longest_streak = streak
+                    best_habit = name
+
+                table.add_row(name, period, str(streak))
 
             self.console.print(table)
+
+            if best_habit:
+                self.console.print(f"\n[green]Longest habit streak is {longest_streak} for habit '{best_habit}'[/green]")
+            else:
+                self.console.print("\n[yellow]No habits have been checked in yet.[/yellow]")
         except Exception as e:
             self.console.print(f"[red]Error calculating streaks: {e}[/red]")
 
@@ -203,6 +291,17 @@ class HabitTracker:
         except Exception as e:
             self.console.print(f"[red]Error deleting habit: {e}[/red]")
 
+    def calc_30days_checkins(self, name):
+        """Calculate how many check-ins in the last 30 days for the specified habit."""
+        logs = self.data.get("logs", {}).get(name, [])
+        thirty_days_ago = datetime.now() - timedelta(days=30)
+        count_30 = 0
+        for log in logs:
+            dt = datetime.fromisoformat(log)
+            if dt >= thirty_days_ago:
+                count_30 += 1
+        return count_30
+
     def summary(self):
         try:
             total_habits = len(self.data.get("habits", {}))
@@ -210,47 +309,84 @@ class HabitTracker:
 
             self.console.print(f"[yellow]Total habits:[/yellow] {total_habits}")
             self.console.print(f"[green]Total check-ins:[/green] {total_checkins}")
+
+            pending_habits = self.get_pending_habits()
+            if pending_habits:
+                self.console.print("\n[red]Pending Habits (need check-in today or this week):[/red]")
+                for item in pending_habits:
+                    habit_name = item[0]
+                    period = item[1]
+                    self.console.print(f"- {habit_name} ({period})")
+            else:
+                self.console.print("\n[green]No pending habits for today/week![/green]")
+
+            daily_list = [h for h, d in self.data.get("habits", {}).items() if d.get("periodicity") == "daily"]
+            if daily_list:
+                self.console.print("\n[blue]Current Daily Habits:[/blue]")
+                for hname in daily_list:
+                    self.console.print(f"- {hname}")
+            else:
+                self.console.print("\n[yellow]No daily habits found.[/yellow]")
+
+            if total_habits > 0:
+                struggle_list = []
+                for habit, details in self.data.get("habits", {}).items():
+                    checks_30 = self.calc_30days_checkins(habit)
+                    struggle_list.append((habit, checks_30))
+
+                struggle_list.sort(key=lambda x: x[1])
+                min_checkin = struggle_list[0][1]
+                struggled_habits = [s for s in struggle_list if s[1] == min_checkin]
+
+                self.console.print("\n[magenta]Habits you struggled with the most last month:[/magenta]")
+                for (habit_name, ccount) in struggled_habits:
+                    self.console.print(f"- {habit_name} -> {ccount} check-ins in last 30 days")
+            else:
+                self.console.print("\n[yellow]No habits to analyze for last month struggles.[/yellow]")
         except Exception as e:
             self.console.print(f"[red]Error generating summary: {e}[/red]")
 
-    def reminder(self):
+    def get_pending_habits(self):
+        pending_list = []
         try:
             today = datetime.now().date()
-            pending_habits = []
-
             for habit, details in self.data.get("habits", {}).items():
-                # No logs => definitely pending
+                period = details.get("periodicity", "daily")
+
                 if habit not in self.data.get("logs", {}):
-                    pending_habits.append(habit)
+                    pending_list.append((habit, period))
                     continue
 
                 logs = self.data["logs"][habit]
                 if not logs:
-                    pending_habits.append(habit)
+                    pending_list.append((habit, period))
                     continue
 
                 last_logged = datetime.fromisoformat(logs[-1]).date()
 
-                if details["periodicity"] == "daily" and last_logged < today:
-                    pending_habits.append(habit)
-
-                elif details["periodicity"] == "weekly":
-                    # if more than 7 days since last log
+                if period == "daily" and last_logged < today:
+                    pending_list.append((habit, period))
+                elif period == "weekly":
                     if (today - last_logged).days > 7:
-                        pending_habits.append(habit)
+                        pending_list.append((habit, period))
+        except Exception as e:
+            self.console.print(f"[red]Error getting pending habits: {e}[/red]")
+        return pending_list
 
-            if pending_habits:
+    def reminder(self):
+        try:
+            pending_list = self.get_pending_habits()
+            if pending_list:
                 self.console.print("[red]You have pending habits to complete![/red]")
-                for habit in pending_habits:
-                    self.console.print(f"- {habit}")
+                for (habit_name, period) in pending_list:
+                    self.console.print(f"- {habit_name} ({period})")
             else:
                 self.console.print("[green]All habits are up to date![/green]")
         except Exception as e:
             self.console.print(f"[red]Error generating reminders: {e}[/red]")
 
-    def dashboard(self):
+    def dashboard(self, ascii_mode: bool = False):
         try:
-            # If no logs, display message
             if not self.data.get("logs"):
                 self.console.print("[yellow]No habit logs to display on dashboard.[/yellow]")
                 return
@@ -262,12 +398,25 @@ class HabitTracker:
                 self.console.print("[yellow]No habits to show in dashboard.[/yellow]")
                 return
 
-            plt.figure(figsize=(10, 5))
-            plt.barh(habits, checkins, color='blue')
-            plt.xlabel("Number of Check-ins")
-            plt.ylabel("Habits")
-            plt.title("Habit Progress Overview")
-            plt.show()
+            if ascii_mode:
+                max_checkins = max(checkins)
+                if max_checkins == 0:
+                    self.console.print("[yellow]No check-ins to display in ASCII dashboard.[/yellow]")
+                    return
+
+                self.console.print("[cyan]ASCII Dashboard Overview[/cyan]")
+                for h, c in zip(habits, checkins):
+                    bar_len = int((c / max_checkins) * 40)
+                    bar = "#" * bar_len
+                    self.console.print(f"[blue]{h}[/blue] ({c} check-ins): [green]{bar}[/green]")
+            else:
+                import matplotlib.pyplot as plt
+                plt.figure(figsize=(10, 5))
+                plt.barh(habits, checkins, color='blue')
+                plt.xlabel("Number of Check-ins")
+                plt.ylabel("Habits")
+                plt.title("Habit Progress Overview")
+                plt.show()
         except Exception as e:
             self.console.print(f"[red]Error displaying dashboard: {e}[/red]")
 
@@ -277,23 +426,23 @@ class HabitTracker:
                 self.console.print(f"[red]Habit '{name}' not found![/red]")
                 return
 
+            habit_info = self.data["habits"][name]
+            period = habit_info.get("periodicity", "daily/weekly?")
+
             logs = self.data.get("logs", {}).get(name, [])
             last_checked = logs[-1] if logs else "Never"
 
-            self.console.print(f"[cyan]Habit:[/cyan] {name}")
-            self.console.print(f"[yellow]Periodicity:[/yellow] {self.data['habits'][name]['periodicity']}")
+            self.console.print(f"[cyan]Habit:[/cyan] {name} ({period})")
+            self.console.print(f"[yellow]Periodicity:[/yellow] {period}")
             self.console.print(f"[green]Last checked-in:[/green] {last_checked}")
+
+            total_ci = len(logs)
+            self.console.print(f"[blue]Total check-ins so far:[/blue] {total_ci}")
         except Exception as e:
             self.console.print(f"[red]Error displaying details for habit '{name}': {e}[/red]")
 
     def fill_data(self):
-        """
-        Populate fake data for testing and demonstration.
-        """
         try:
-            # Clear existing data (optional)
-            # self.data = {"habits": {}, "logs": {}}
-
             sample_habits = [
                 ("Workout", "daily"),
                 ("ReadBook", "daily"),
@@ -303,7 +452,6 @@ class HabitTracker:
                 ("PayBills", "weekly")
             ]
 
-            # Add sample habits if not present
             for (habit_name, period) in sample_habits:
                 if habit_name not in self.data["habits"]:
                     self.data["habits"][habit_name] = {
@@ -313,27 +461,21 @@ class HabitTracker:
                 if habit_name not in self.data["logs"]:
                     self.data["logs"][habit_name] = []
 
-            # Generate random check-ins
-            # e.g., for the past 15 days
-            for habit_name in self.data["habits"]:
-                # random number of check-ins
-                random_days = random.randint(0, 10)
+            for habit_name, details in self.data["habits"].items():
+                random_days = random.randint(2, 10)
                 base_date = datetime.now()
-                for i in range(random_days):
+                for _ in range(random_days):
                     day_offset = random.randint(1, 15)
                     log_date = base_date - timedelta(days=day_offset)
                     log_str = log_date.isoformat()
                     self.data["logs"][habit_name].append(log_str)
 
             self.save_data()
-            self.console.print("[green]Fake data added successfully![/green]")
+            self.console.print("[green]Fake data added successfully! Now you can test the functionalities.[/green]")
         except Exception as e:
             self.console.print(f"[red]Error filling data: {e}[/red]")
 
     def reset_all(self):
-        """
-        Reset the entire habit system (delete habits and logs).
-        """
         try:
             self.data = {"habits": {}, "logs": {}}
             self.save_data()
@@ -341,11 +483,101 @@ class HabitTracker:
         except Exception as e:
             self.console.print(f"[red]Error resetting system: {e}[/red]")
 
+
 ####################################
 # Typer CLI Definition
 ####################################
 app = typer.Typer()
-habit_tracker = HabitTracker()
+
+config_manager = ConfigManager()
+habit_tracker = HabitTracker(config_manager)
+
+
+####################################
+# Intro Command
+####################################
+@app.command("intro")
+def intro():
+    """Explain to the user how to use the program and what it's about."""
+    typer.echo("""
+[cyan]Welcome to the Habit Tracker CLI![/cyan]
+
+This program helps you create, track, and analyze habits. You can:
+ - Add daily or weekly habits,
+ - Check them off when done,
+ - View streaks and pending tasks,
+ - See analytics,
+ - And more!
+
+[b]Command Overview:[/b]
+ - [green]intro[/green]: This introduction.
+ - [green]add[/green]: Create a new habit.
+ - [green]check[/green]: Mark a habit as complete.
+ - [green]list_habits[/green]: Show all tracked habits.
+ - [green]streaks[/green]: See your best streaks.
+ - [green]reminder[/green]: Show overdue habits.
+ - [green]summary[/green]: View analytics and performance.
+ - [green]dashboard[/green]: Show a chart (ASCII or Matplotlib).
+ - [green]delete[/green]: Remove a habit.
+ - [green]details[/green]: Detailed info on a habit.
+ - [green]fill[/green]: Generate some fake data.
+ - [green]reset[/green]: Wipe everything.
+ - [green]config[/green]: Adjust file paths or root path.
+ - [green]welcome[/green]: Display a welcome message & summary.
+
+[b]Usage Examples:[/b]
+ - python main.py add "Workout" daily
+ - python main.py list_habits
+ - python main.py streaks
+ - python main.py config --show
+ - python main.py config --data-file MyHabits.json
+
+Enjoy tracking your habits!
+""")
+
+####################################
+# Config Command
+####################################
+@app.command("config")
+def config_command(
+    show: bool = typer.Option(False, "--show", help="Show current config"),
+    data_file: str = typer.Option(None, "--data-file", help="Set location of habits data file"),
+    user_file: str = typer.Option(None, "--user-file", help="Set location of user file"),
+    root_path: str = typer.Option(None, "--root-path", help="Set a new root path."),
+):
+    """Manage configuration, including root path, data_file, and user_file."""
+    try:
+        if show:
+            config_manager.show()
+        if data_file:
+            config_manager.set_data_file(data_file)
+            typer.echo(f"[green]Data file updated to {data_file}[/green]")
+        if user_file:
+            config_manager.set_user_file(user_file)
+            typer.echo(f"[green]User file updated to {user_file}[/green]")
+        if root_path:
+            config_manager.set_root_path(root_path)
+            typer.echo(f"[green]Root path updated to {root_path}[/green]")
+
+        if show or data_file or user_file or root_path:
+            typer.echo("[yellow]Please re-run the application so changes take effect.[/yellow]")
+    except Exception as e:
+        handle_error(e, "Failed to manage config")
+        raise typer.Exit(1)
+
+
+####################################
+# Standard Commands
+####################################
+
+@app.command("list_habits")
+def list_habits_cmd():
+    """Show all tracked habits."""
+    try:
+        habit_tracker.list_habits_cmd()
+    except Exception as e:
+        handle_error(e, "Failed to list habits")
+        raise typer.Exit(1)
 
 @app.command()
 def add(
@@ -371,17 +603,8 @@ def check(
         raise typer.Exit(1)
 
 @app.command()
-def list():
-    """Show all tracked habits."""
-    try:
-        habit_tracker.list_habits()
-    except Exception as e:
-        handle_error(e, "Failed to list habits")
-        raise typer.Exit(1)
-
-@app.command()
 def streaks():
-    """Show habit streaks and broken habits."""
+    """Show habit streaks and the overall longest streak."""
     try:
         habit_tracker.streaks()
     except Exception as e:
@@ -410,7 +633,7 @@ def welcome():
 
 @app.command()
 def summary():
-    """Show analytics and performance summary."""
+    """Show analytics and performance summary (pending, daily, struggled)."""
     try:
         habit_tracker.summary()
     except Exception as e:
@@ -419,7 +642,7 @@ def summary():
 
 @app.command()
 def reminder():
-    """Show pending habits that need completion today."""
+    """Show pending habits that need completion today (mention daily/weekly)."""
     try:
         habit_tracker.reminder()
     except Exception as e:
@@ -427,10 +650,12 @@ def reminder():
         raise typer.Exit(1)
 
 @app.command()
-def dashboard():
-    """Display a graphical analysis of habit tracking."""
+def dashboard(
+    ascii_mode: bool = typer.Option(False, "--ascii", help="Print ASCII chart in the console.")
+):
+    """Display a graphical or ASCII analysis of habit tracking."""
     try:
-        habit_tracker.dashboard()
+        habit_tracker.dashboard(ascii_mode=ascii_mode)
     except Exception as e:
         handle_error(e, "Failed to display dashboard")
         raise typer.Exit(1)
@@ -471,6 +696,5 @@ def reset():
 ####################################
 # Main Entry
 ####################################
-
 if __name__ == "__main__":
     app()
