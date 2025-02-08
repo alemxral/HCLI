@@ -64,6 +64,32 @@ python main.py dashboard
 python main.py reset
 ```
 
+## Running Unit Tests
+
+This project includes a **unit test suite** to verify the core functionality of the Habit Tracker CLI. We use **pytest** for testing. To run the tests:
+
+1. **Install Dependencies**
+
+   Make sure you have all required packages installed:
+   ```bash
+   pip install -r requirements.txt
+
+### **2. Running Tests**
+Run all tests:
+```sh
+pytest
+```
+or:
+```sh
+python -m pytest
+```
+
+#### Run a Specific Test File:
+```sh
+pytest tests/test_habit_tracker.py
+
+
+
 ## Project Repository
 You can find the latest source code, contribute, or report issues at:
 [GitHub Repository](https://github.com/alemxral/HHCLI.git)
