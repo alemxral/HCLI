@@ -233,7 +233,7 @@ Enjoy tracking your habits!
                 else:
                     self.console.print("\n[green]No pending habit reminders.[/green]")
             else:
-                self.console.print("[cyan]Welcome to HCLI! Set up your profile to begin.[/cyan]")
+                self.console.print("[cyan]Welcome to HCLI!")
                 self.console.print("For usage info, run: [blue]python main.py --help[/blue]")
         except Exception as e:
             self.console.print(f"[red]Error displaying welcome message: {e}[/red]")
@@ -651,6 +651,25 @@ def config_command(
 def setup_user():
     """Setup or update the username for the Habit Tracker."""
     habit_tracker.setup_user()
+
+
+@app.command("change-username")
+def change_username():
+    """Change the existing username for the Habit Tracker."""
+    try:
+        new_username = habit_tracker.console.input("[cyan]Enter a new username: [/cyan]").strip()
+
+        if not new_username:
+            habit_tracker.console.print("[red]Error: Username cannot be empty![/red]")
+            return
+
+        with open(habit_tracker.USER_FILE, "w") as f:
+            json.dump({"username": new_username}, f, indent=4)
+
+        habit_tracker.console.print(f"[green]Username changed successfully to '{new_username}'![/green]")
+
+    except Exception as e:
+        habit_tracker.console.print(f"[red]Error changing username: {e}[/red]")
 
 ####################################
 # Standard Commands
