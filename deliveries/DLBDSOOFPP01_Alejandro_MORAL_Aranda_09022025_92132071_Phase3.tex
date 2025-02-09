@@ -1,0 +1,75 @@
+\documentclass[a4paper,12pt]{article}
+
+% Packages
+\usepackage{graphicx}   % For diagrams
+\usepackage{geometry}   % Page layout
+\usepackage{hyperref}   % Hyperlinks
+\usepackage{titlesec}   % Formatting section titles
+\usepackage{enumitem}   % Bullet points
+
+% Page setup
+\geometry{left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+
+% Title Formatting
+\titleformat{\section}{\Large\bfseries}{\thesection}{1em}{}
+
+\begin{document}
+
+% Title
+\begin{center}
+    {\LARGE \textbf{HCLI - Habit Tracker CLI}}\\[0.5cm]
+    {\Large \textbf{Finalization Phase}}\\[0.3cm]
+    {\small Author: Alejandro Moral Aranda \hspace{1cm} Date: \today}
+    \hrule
+\end{center}
+
+% Section: Project Summary
+\section{Project Summary}
+HCLI (Habit Tracker CLI) is a command-line-based habit tracking application designed to provide a lightweight and efficient way for users to track their habits. The tool offers features such as habit addition, completion tracking, streak analysis, and analytics visualization. The project has been refined and optimized following multiple phases, ensuring usability, performance, and accuracy.
+
+% Section: Objectives and Implementation
+\section{Objectives and Implementation}
+The primary goal of HCLI was to develop a user-friendly and functional habit tracking CLI tool with analytics. Throughout the development:
+\begin{itemize}
+    \item Core functionalities such as habit creation, completion tracking, and summary analysis were implemented.
+    \item JSON-based data storage was used to provide persistent tracking.
+    \item A command-driven interface was built using Python’s Typer and Rich libraries.
+    \item Advanced analytics features such as streak tracking and visual dashboards were integrated.
+    \item The tool was rigorously tested using Pytest to ensure accuracy and stability.
+\end{itemize}
+
+% Section: Challenges and Lessons Learned
+\section{Challenges and Lessons Learned}
+Throughout the development and refinement of HCLI, several challenges were encountered:
+\begin{itemize}
+    \item Ensuring data persistence and integrity across different executions.
+    \item Implementing a robust configuration system that allows users to define storage paths.
+    \item Managing user input and error handling effectively to provide a smooth experience.
+    \item Refining the testing process to eliminate redundancy and improve test coverage.
+\end{itemize}
+These challenges led to important insights about software design, modularization, and efficient debugging practices.
+
+% Section: Final Submission Details
+\section{Final Submission Details}
+To finalize the project, the following steps were taken:
+\begin{itemize}
+    \item The final version of HCLI was hosted on GitHub, ensuring accessibility and version control.
+    \item All project files, including source code, documentation, and test scripts, were compiled into a ZIP file for submission.
+    \item The project was tested extensively to validate its functionalities and ensure stability.
+    \item A comprehensive README file was included to guide users on installation and usage.
+\end{itemize}
+
+\noindent \textbf{GitHub Repository:} \href{https://github.com/alemxral/HCLI}{HCLI GitHub Repository}
+
+% Section: Reflection
+\section{Reflection}
+The development of HCLI has been an insightful journey, allowing for hands-on experience in CLI development, data management, and software testing. The project effectively meets its original objectives, though certain refinements and additional features could be implemented in future iterations, such as:
+\begin{itemize}
+    \item Adding a graphical user interface (GUI) for enhanced usability.
+    \item Expanding the analytics module with more detailed insights.
+    \item Implementing cloud-based data storage for cross-device accessibility.
+\end{itemize}
+Overall, the experience has reinforced the importance of structured development, iterative testing, and user-focused design.
+
+\end{document}
+

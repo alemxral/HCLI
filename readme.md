@@ -13,7 +13,6 @@ The Habit Tracker HCLI is a command-line application that helps users track thei
 - Store user preferences and habit data in JSON format
 
 ## Installation
-
 Ensure you have Python installed, then install the required dependencies:
 ```sh
 pip install -r requirements.txt
@@ -26,11 +25,10 @@ You can run the application using the following commands, or alternatively, you 
 cscript init.vbs
 ```
 
-OR Run the application using any HHCLI command in the root path:
+OR Run the application using any HCLI command in the root path:
 
 ### Initial Setup
-
-Run any command to start, the application will ask you for an username to start.
+Run any command to start, the application will ask you for a username to start.
 
 ```sh
 python main.py --help
@@ -65,21 +63,20 @@ python main.py reset
 ```
 
 ## Running Unit Tests
-
 This project includes a **unit test suite** to verify the core functionality of the Habit Tracker CLI. We use **pytest** for testing. To run the tests:
 
-1. **Install Dependencies**
-
-   Make sure you have all required packages installed:
-   ```bash
-   pip install -r requirements.txt
+### **1. Install Dependencies**
+Make sure you have all required packages installed:
+```sh
+pip install -r requirements.txt
+```
 
 ### **2. Running Tests**
 Run all tests:
 ```sh
 pytest
 ```
-or:
+Or:
 ```sh
 python -m pytest
 ```
@@ -87,13 +84,12 @@ python -m pytest
 #### Run a Specific Test File:
 ```sh
 pytest tests/test_habit_tracker.py
-
-
+```
 
 ## Project Repository
 You can find the latest source code, contribute, or report issues at:
 [GitHub Repository](https://github.com/alemxral/HHCLI.git)
 
-
 ## License
 This project is licensed under the MIT License.
+
