@@ -88,7 +88,7 @@ pytest tests/test_habit_tracker.py
 
 ## Project Repository
 You can find the latest source code, contribute, or report issues at:
-[GitHub Repository](https://github.com/alemxral/HHCLI.git)
+[GitHub Repository](https://github.com/alemxral/HCLI.git)
 
 ## License
 This project is licensed under the MIT License.
