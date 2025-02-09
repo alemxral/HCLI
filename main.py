@@ -138,8 +138,15 @@ class HabitTracker:
 
     def setup_user(self):
         try:
+            # Ensure config exists before proceeding
             self.config_manager.ensure_config()
+
+            # Avoid asking twice by checking if USER_FILE already exists
+            if os.path.exists(self.USER_FILE):
+                return  # Exit early if user already set up
+
             username = self.console.input("[cyan]Enter a username to set up or change the existing username in HCLI: [/cyan]")
+
             ud = os.path.dirname(self.USER_FILE)
             if ud and not os.path.exists(ud):
                 os.makedirs(ud)
@@ -148,8 +155,10 @@ class HabitTracker:
                 json.dump({"username": username}, f, indent=4)
 
             self.console.print(f"[green]Username '{username}' has been set successfully![/green]")
+            
         except Exception as e:
             self.console.print(f"[red]Error setting up user: {e}[/red]")
+
 
     def intro(self):
         """Explain to the user how to use the program and what it's about."""
