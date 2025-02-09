@@ -1,0 +1,76 @@
+\documentclass[a4paper,12pt]{article}
+
+% Packages
+\usepackage{geometry}   % Page layout
+\usepackage{hyperref}   % Hyperlinks
+\usepackage{titlesec}   % Formatting section titles
+
+% Page setup
+\geometry{left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+
+% Title Formatting
+\titleformat{\section}{\Large\bfseries}{\thesection}{1em}{}
+
+\begin{document}
+
+% Title
+\begin{center}
+    {\LARGE \textbf{Habit Tracker HCLI}}\\[0.5cm]
+    {\Large \textbf{Abstract}}\\[0.3cm]
+    {\small Author: Alejandro Moral Aranda \hspace{1cm} Date: \today}
+    \hrule
+\end{center}
+
+\section{Introduction}
+The Habit Tracker HCLI is a command-line application that helps users create, manage, and analyze their daily and weekly habits. The motivation behind the project was to provide a lightweight and distraction-free tool for habit tracking, accessible entirely through the terminal. 
+
+Unlike traditional habit tracking applications, HCLI stores data in JSON format for persistence, provides analytics to monitor progress, and enables users to configure storage paths for flexibility.
+
+\section{Implementation Overview}
+The application is built using:
+\begin{itemize}
+    \item \textbf{Python} for core functionality.
+    \item \textbf{Typer} for the command-line interface.
+    \item \textbf{Rich} for displaying tables and formatted output.
+    \item \textbf{Pytest} for unit testing.
+\end{itemize}
+
+Key features include:
+\begin{itemize}
+    \item Adding and managing daily/weekly habits.
+    \item Checking off completed habits, including past dates.
+    \item Tracking streaks and generating habit analytics.
+    \item Displaying dashboards in ASCII and graphical format.
+    \item Configuring storage paths for habit/user data.
+\end{itemize}
+
+\section{Challenges and Solutions}
+\textbf{1. Avoiding Duplicate User Input:}  
+Initially, the `setup-user` command asked for input twice. This was resolved by ensuring config file creation before user input.
+
+\textbf{2. Handling Edge Cases in Streak Calculation:}  
+Edge cases were identified where incomplete check-ins broke streaks incorrectly. These were fixed by adjusting date validation logic.
+
+\textbf{3. Ensuring Cross-Platform Compatibility:}  
+The script was tested on different operating systems to ensure compatibility with Windows, macOS, and Linux terminals.
+
+\section{Lessons Learned}
+\begin{itemize}
+    \item User Experience in CLI Matters: Clear and structured output using Rich improves usability.
+    \item Configuration is Key: Allowing users to modify paths for storing JSON files provides flexibility.
+    \item Testing Prevents Bugs: Unit testing with Pytest helped catch issues before deployment.
+\end{itemize}
+
+\section{Final Thoughts}
+The project successfully met its goal of providing a functional CLI-based habit tracker with analytics and flexible configuration. Future improvements could include:
+\begin{itemize}
+    \item Cloud storage integration for syncing habits across devices.
+    \item Reminder notifications for pending habits.
+    \item Enhanced visualization using external dashboards.
+\end{itemize}
+
+\section{GitHub Repository}
+The complete project, including the source code and documentation, is available on GitHub:  
+\url{https://github.com/alemxral/HCLI}
+
+\end{document}
