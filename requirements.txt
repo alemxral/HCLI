@@ -1,8 +1,4 @@
 typer
 rich
 matplotlib
-json
-datetime
-os
-random
 pytest

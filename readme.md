@@ -17,6 +17,7 @@ Ensure you have Python installed, then install the required dependencies:
 ```sh
 pip install -r requirements.txt
 ```
+Also, verify that the config.json file is configured with the project's root directory.
 
 ## Usage
 You can run the application using the following commands, or alternatively, you can run the `init.vbs` script to launch the program automatically with:
