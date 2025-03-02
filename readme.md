@@ -27,6 +27,7 @@ cscript init.vbs
 ```
 
 OR Run the application using any HCLI command in the root path:
+Also, verify that the config.json file is configured with the project's root directory!
 
 ### Initial Setup
 Run any command to start, the application will ask you for a username to start.
@@ -34,7 +35,7 @@ Run any command to start, the application will ask you for a username to start.
 ```sh
 python main.py --help
 ```
-
+Also, verify that the config.json file is configured with the project's root directory!
 ### Habit Management
 ```sh
 python main.py add "Workout" daily
